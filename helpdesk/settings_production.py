@@ -16,7 +16,6 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Generate a new secret key for production
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'CHANGE-THIS-IN-PRODUCTION-USE-ENV-VARIABLE')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -26,10 +25,15 @@ DEBUG = False
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    # Add your production domain here
-    # 'yourdomain.com',
-    # 'www.yourdomain.com',
+    '.onrender.com',  # Render subdomains
+    'liveITdeck.onrender.com',
+    'superdoll.co.tz',
+    'www.superdoll.co.tz',
 ]
+
+# Add any additional hosts from environment
+if 'ALLOWED_HOSTS' in os.environ:
+    ALLOWED_HOSTS.extend(os.environ['ALLOWED_HOSTS'].split(','))
 
 # Application definition
 INSTALLED_APPS = [
@@ -78,20 +82,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'helpdesk.wsgi.application'
 ASGI_APPLICATION = 'helpdesk.asgi.application'
 
-# Database - Production MySQL/MariaDB Configuration
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'django_it_help'),
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-            'use_unicode': True,
-        },
+# Database - Support both PostgreSQL (Render) and MySQL (fallback)
+import dj_database_url
+
+# Check if DATABASE_URL is provided (Render PostgreSQL)
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    }
+else:
+    # Fallback to MySQL configuration
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'django_it_help'),
+            'USER': os.environ.get('DB_USER', 'root'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+                'use_unicode': True,
+            },
         'TEST': {
             'CHARSET': 'utf8mb4',
             'COLLATION': 'utf8mb4_unicode_ci',
