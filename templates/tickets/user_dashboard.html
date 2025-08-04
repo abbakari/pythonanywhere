@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Dashboard - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gem fa-2x mb-2"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>IT Help Desk</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="{% url 'user_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="{% url 'create_ticket' %}">
+                        <i class="fas fa-plus-circle me-2"></i>New Ticket
+                    </a>
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>My Tickets
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+                
+                <!-- <div class="mt-4 p-3 bg-light rounded text-dark">
+                    <div class="moving-text small">
+                        We don't grow when things are easy, we grow when we face challenges
+                    </div>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-user me-2"></i>Welcome, {{ user.first_name|default:user.username }}!
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'create_ticket' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Ticket
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ stats.total_tickets }}</div>
+                                <div>Total Tickets</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-ticket-alt fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ stats.open_tickets }}</div>
+                                <div><span class="status-badge status-open">Open</span></div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-exclamation-circle fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ stats.in_progress_tickets }}</div>
+                                <div><span class="status-badge status-in_progress">In Progress</span></div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-cog fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-success">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ stats.resolved_tickets }}</div>
+                                <div>Resolved</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-danger">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ stats.unresolved_tickets }}</div>
+                                <div>Unresolved</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-times-circle fa-2x text-danger opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Tickets -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock me-2"></i>Recent Tickets
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_tickets %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Title</th>
+                                                <th>Priority</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for ticket in recent_tickets %}
+                                                <tr class="priority-{{ ticket.priority }}">
+                                                    <td><strong>#{{ ticket.id }}</strong></td>
+                                                    <td>{{ ticket.title|truncatechars:50 }}</td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if ticket.priority == 'urgent' %}bg-danger
+                                                            {% elif ticket.priority == 'high' %}bg-warning
+                                                            {% elif ticket.priority == 'medium' %}bg-info
+                                                            {% else %}bg-success{% endif %}">
+                                                            {{ ticket.get_priority_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge 
+                                                            {% if ticket.status == 'open' %}bg-warning
+                                                            {% elif ticket.status == 'in_progress' %}bg-info
+                                                            {% elif ticket.status == 'resolved' %}bg-success
+                                                            {% else %}bg-secondary{% endif %}">
+                                                            {{ ticket.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ ticket.created_at|date:"M d, Y H:i" }}</td>
+                                                    <td>
+                                                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No tickets yet</h5>
+                                    <p class="text-muted">Create your first support ticket to get started.</p>
+                                    <a href="{% url 'create_ticket' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i>Create Ticket
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

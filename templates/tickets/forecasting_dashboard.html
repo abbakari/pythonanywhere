@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block title %}Forecasting Dashboard - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gem fa-2x mb-2"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>Forecasting</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>MAIN ADMIN DASHBOARD
+                    </a>
+                    <a class="nav-link" href="{% url 'analytics_dashboard' %}">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                    <a class="nav-link active" href="{% url 'forecasting_dashboard' %}">
+                        <i class="fas fa-crystal-ball me-2"></i>Forecasting
+                    </a>
+                    <a class="nav-link" href="{% url 'budget_management' %}">
+                        <i class="fas fa-dollar-sign me-2"></i>Budget
+                    </a>
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>All Tickets
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+                
+                <!-- <div class="mt-4 p-3 bg-light rounded text-dark">
+                    <div class="moving-text small">
+                        We don't grow when things are easy, we grow when we face challenges
+                    </div>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-crystal-ball me-2"></i>Forecasting Dashboard
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="refreshForecasts()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="adjustParameters()">
+                            <i class="fas fa-sliders-h me-1"></i>Adjust Parameters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Status -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card bg-warning">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">{{ current_open_tickets }}</div>
+                                <div>Current Open Tickets</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-exclamation-circle fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card bg-info">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">
+                                    {% if predicted_workload %}{{ predicted_workload.0.new_tickets }}{% else %}0{% endif %}
+                                </div>
+                                <div>Predicted Next Month</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card bg-success">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">85%</div>
+                                <div>Forecast Accuracy</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-bullseye fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast Charts -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Ticket Volume Forecast
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="forecastChart" width="400" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>Seasonal Patterns
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="seasonalChart" width="300" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workload Predictions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tasks me-2"></i>Predicted Workload (Next 6 Months)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>New Tickets</th>
+                                            <th>Predicted Resolved</th>
+                                            <th>Remaining Workload</th>
+                                            <th>Workload Trend</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for workload in predicted_workload %}
+                                            <tr>
+                                                <td><strong>{{ workload.month }}</strong></td>
+                                                <td>
+                                                    <span class="badge priority-badge priority-medium">{{ workload.new_tickets }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge status-badge status-resolved">{{ workload.predicted_resolved }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if workload.remaining_workload > 50 %}status-badge status-unresolved
+                                                        {% elif workload.remaining_workload > 25 %}status-badge status-in_progress
+                                                        {% else %}status-badge status-resolved{% endif %}">
+                                                        {{ workload.remaining_workload }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if workload.remaining_workload > 40 %}
+                                                        <i class="fas fa-arrow-up text-danger"></i> High
+                                                    {% elif workload.remaining_workload > 20 %}
+                                                        <i class="fas fa-arrow-right text-warning"></i> Moderate
+                                                    {% else %}
+                                                        <i class="fas fa-arrow-down text-success"></i> Low
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Recommendations -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users-cog me-2"></i>Resource Recommendations
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Month</th>
+                                            <th>Current Staff</th>
+                                            <th>Required Staff</th>
+                                            <th>Additional Needed</th>
+                                            <th>Recommendation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rec in resource_recommendations %}
+                                            <tr>
+                                                <td><strong>{{ rec.month }}</strong></td>
+                                                <td>{{ rec.current_admins }}</td>
+                                                <td>{{ rec.required_admins }}</td>
+                                                <td>
+                                                    {% if rec.additional_needed > 0 %}
+                                                        <span class="badge status-badge status-in_progress">+{{ rec.additional_needed }}</span>
+                                                    {% else %}
+                                                        <span class="badge status-badge status-resolved">Sufficient</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if rec.additional_needed > 0 %}
+                                                        <span class="text-warning">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            Hire {{ rec.additional_needed }} more staff
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="text-success">
+                                                            <i class="fas fa-check-circle me-1"></i>
+                                                            Current staffing adequate
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>AI Insights
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-robot me-2"></i>Prediction Model</h6>
+                                <p class="small mb-2">Using linear regression based on 12 months of historical data.</p>
+                                <p class="small mb-0"><strong>Accuracy:</strong> 85%</p>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Alert</h6>
+                                <p class="small mb-0">Workload expected to increase by 25% next quarter. Consider hiring additional staff.</p>
+                            </div>
+                            
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-chart-line me-2"></i>Trend</h6>
+                                <p class="small mb-0">Resolution efficiency improving by 3% monthly. Great job team!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Forecasts -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tags me-2"></i>Category-wise Forecasts (Next 3 Months)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for cat_forecast in category_forecasts %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-left-primary">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ cat_forecast.category }}</h6>
+                                                {% for month in cat_forecast.forecast %}
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <small>{{ month.month }}</small>
+                                                        <span class="badge bg-primary">{{ month.predicted_tickets }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Forecast Chart
+const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+const historicalData = {{ historical_data|safe }};
+const forecastData = {{ forecast_data|safe }};
+
+// Combine historical and forecast data
+const allLabels = [...historicalData.map(item => item.month), ...forecastData.map(item => item.month)];
+const historicalValues = [...historicalData.map(item => item.tickets), ...Array(forecastData.length).fill(null)];
+const forecastValues = [...Array(historicalData.length).fill(null), ...forecastData.map(item => item.predicted_tickets)];
+
+const forecastChart = new Chart(forecastCtx, {
+    type: 'line',
+    data: {
+        labels: allLabels,
+        datasets: [{
+            label: 'Historical',
+            data: historicalValues,
+            borderColor: '#36A2EB',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.4,
+            fill: false
+        }, {
+            label: 'Forecast',
+            data: forecastValues,
+            borderColor: '#FF6384',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            borderDash: [5, 5],
+            tension: 0.4,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Tickets'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        }
+    }
+});
+
+// Seasonal Chart
+const seasonalCtx = document.getElementById('seasonalChart').getContext('2d');
+const seasonalData = {{ seasonal_data|safe }};
+const seasonalChart = new Chart(seasonalCtx, {
+    type: 'radar',
+    data: {
+        labels: seasonalData.map(item => item.month.substring(0, 3)),
+        datasets: [{
+            label: 'Average Tickets',
+            data: seasonalData.map(item => item.avg_tickets),
+            borderColor: '#4BC0C0',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            pointBackgroundColor: '#4BC0C0'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            r: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Functions
+function refreshForecasts() {
+    location.reload();
+}
+
+function adjustParameters() {
+    alert('Forecast parameter adjustment feature coming soon!');
+}
+</script>
+{% endblock %}

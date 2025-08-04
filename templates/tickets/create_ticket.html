@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block title %}Create Ticket - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gem fa-2x mb-2"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>IT Help Desk</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% url 'user_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>MAIN ADMIN DASHBOARD
+                    </a>
+                    <a class="nav-link active" href="{% url 'create_ticket' %}">
+                        <i class="fas fa-plus-circle me-2"></i>New Ticket
+                    </a>
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>My Tickets
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-plus-circle me-2"></i>Create New Ticket
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <!-- Main Ticket Form -->
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>Ticket Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                                        <i class="fas fa-heading me-2"></i>Title *
+                                    </label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small">{{ form.title.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                {% if form.fields.category %}
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        <i class="fas fa-tags me-2"></i>Category *
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger small">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Priority *
+                                    </label>
+                                    {{ form.priority }}
+                                    {% if form.priority.errors %}
+                                        <div class="text-danger small">{{ form.priority.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        <i class="fas fa-align-left me-2"></i>Description *
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-2"></i>Submit Ticket
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help & Tips -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Help & Tips
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Be specific in your title</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Provide detailed description</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Include error messages if any</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Describe steps to reproduce</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Admin will assign category and priority</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-bullhorn me-2"></i>Priority Guidelines
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="badge bg-danger">Urgent</span>
+                                <small class="ms-2">System down, security breach</small>
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-warning">High</span>
+                                <small class="ms-2">Major functionality affected</small>
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-info">Medium</span>
+                                <small class="ms-2">Minor issues, workaround available</small>
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-success">Low</span>
+                                <small class="ms-2">Enhancement requests, cosmetic issues</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mt-3">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-phone me-2"></i>Emergency Contact
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center">
+                                <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                                <h6>Need Immediate Help?</h6>
+                                <p class="small text-muted">
+                                    Call IT Support:<br>
+                                    <strong>+1-555-SUPERDOLL-HELP-TEAM(4357)</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

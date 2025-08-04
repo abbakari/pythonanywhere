@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sticky Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0 position-fixed h-100">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>IT Help Desk</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.path == '/admin/dashboard/' %}active{% endif %}" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link {% if request.path == '/admin/analytics/' %}active{% endif %}" href="{% url 'analytics_dashboard' %}">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                    <a class="nav-link {% if request.path == '/admin/budget/' %}active{% endif %}" href="{% url 'budget_management' %}">
+                        <i class="fas fa-wallet me-2"></i>Budget Management
+                    </a>
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>All Tickets
+                    </a>
+                    <a class="nav-link" href="{% url 'create_ticket' %}">
+                        <i class="fas fa-plus-circle me-2"></i>New Ticket
+                    </a>
+                    <hr class="my-2">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-auto p-4">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .sidebar {
+        background: white;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    
+    .main-content {
+        margin-left: 250px;
+        padding: 20px;
+    }
+    
+    .nav-link {
+        color: #333;
+        padding: 10px 15px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-link:hover {
+        background: #f8f9fa;
+        color: #007bff;
+    }
+    
+    .nav-link.active {
+        background: #007bff;
+        color: white;
+    }
+    
+    .nav-link i {
+        width: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}

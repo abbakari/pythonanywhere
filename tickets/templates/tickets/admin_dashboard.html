@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- User Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">In Progress</h5>
+                    <p class="card-text display-4">{{ in_progress_tickets }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Resolved</h5>
+                    <p class="card-text display-4">{{ resolved_tickets }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Statistics -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Priority Statistics</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="priorityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Category Statistics -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Category Statistics</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Tickets Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Tickets</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in recent_tickets %}
+                        <tr>
+                            <td>{{ ticket.title }}</td>
+                            <td>{{ ticket.category.name }}</td>
+                            <td>
+                                <span class="badge bg-{{ ticket.priority|lower }}">{{ ticket.priority }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ ticket.status|lower }}">{{ ticket.status }}</span>
+                            </td>
+                            <td>{{ ticket.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize priority statistics chart
+    const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+    new Chart(priorityCtx, {
+        type: 'pie',
+        data: {
+            labels: ['High', 'Urgent'],
+            datasets: [{
+                data: [{{ high_priority }}, {{ urgent_priority }}],
+                backgroundColor: ['#dc3545', '#ffc107']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Priority Distribution'
+                }
+            }
+        }
+    });
+
+    // Initialize category statistics chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ category_labels|safe }},
+            datasets: [{
+                label: 'Number of Tickets',
+                data: {{ category_counts|safe }},
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Tickets by Category'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

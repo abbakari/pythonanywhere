@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block title %}Budget Management - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gem fa-2x mb-2"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>Budget</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="{% url 'analytics_dashboard' %}">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                    <a class="nav-link" href="{% url 'forecasting_dashboard' %}">
+                        <i class="fas fa-crystal-ball me-2"></i>Forecasting
+                    </a>
+                    <a class="nav-link active" href="{% url 'budget_management' %}">
+                        <i class="fas fa-dollar-sign me-2"></i>Budget
+                    </a>
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>All Tickets
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+                
+                <!-- <div class="mt-4 p-3 bg-light rounded text-dark">
+                    <div class="moving-text small">
+                        We don't grow when things are easy, we grow when we face challenges
+                    </div>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-dollar-sign me-2"></i>Budget Management
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'create_budget' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Budget
+                        </a>
+                        <a href="{% url 'budget_report_table' %}" class="btn btn-info">
+                            <i class="fas fa-table me-1"></i>View Table Report
+                        </a>
+                        <button type="button" class="btn btn-success" onclick="exportBudgetReport()">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Alerts -->
+            {% if alerts %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    {% for alert in alerts %}
+                        <div class="alert alert-{{ alert.type }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ alert.message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Budget Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card bg-primary">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">${{ total_allocated|floatformat:0 }}</div>
+                                <div>Total Allocated</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-wallet fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-warning">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">${{ total_spent|floatformat:0 }}</div>
+                                <div>Total Spent</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-credit-card fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-success">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">${{ total_remaining|floatformat:0 }}</div>
+                                <div>Remaining</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-piggy-bank fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-info">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="stat-number">${{ cost_per_ticket }}</div>
+                                <div>Cost per Ticket</div>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-ticket-alt fa-2x opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Utilization -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Budget Utilization by Category
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% for item in budget_utilization %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">{{ item.budget.category.name }}</h6>
+                                        <span class="text-muted">
+                                            ${{ item.budget.spent|floatformat:0 }} / ${{ item.budget.amount|floatformat:0 }}
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 25px;">
+                                        <div class="progress-bar bg-{{ item.status }}" 
+                                             role="progressbar" 
+                                             style="width: {{ item.utilization_percent }}%"
+                                             aria-valuenow="{{ item.utilization_percent }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ item.utilization_percent }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Spending Distribution
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="spendingChart" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Spending Trends -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>Monthly Spending Trends
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="spendingTrendsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Details Table -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-table me-2"></i>Budget Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Budget Name</th>
+                                            <th>Category</th>
+                                            <th>Allocated</th>
+                                            <th>Spent</th>
+                                            <th>Remaining</th>
+                                            <th>Utilization</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for budget in budgets %}
+                                            <tr>
+                                                <td><strong>{{ budget.name }}</strong></td>
+                                                <td>
+                                                    <span class="badge bg-info">{{ budget.category.name }}</span>
+                                                </td>
+                                                <td>${{ budget.amount|floatformat:2 }}</td>
+                                                <td>${{ budget.spent|floatformat:2 }}</td>
+                                                <td>${{ budget.remaining|floatformat:2 }}</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px; width: 100px;">
+                                                        <div class="progress-bar 
+                                                            {% if budget.percentage_used >= 90 %}bg-danger
+                                                            {% elif budget.percentage_used >= 75 %}bg-warning
+                                                            {% elif budget.percentage_used >= 50 %}bg-info
+                                                            {% else %}bg-success{% endif %}" 
+                                                            role="progressbar" 
+                                                            style="width: {{ budget.percentage_used }}%">
+                                                        </div>
+                                                    </div>
+                                                    <small>{{ budget.percentage_used|floatformat:1 }}%</small>
+                                                </td>
+                                                <td>
+                                                    {% if budget.percentage_used >= 90 %}
+                                                        <span class="badge status-badge status-unresolved">Critical</span>
+                                                    {% elif budget.percentage_used >= 75 %}
+                                                        <span class="badge status-badge status-in_progress">Warning</span>
+                                                    {% elif budget.percentage_used >= 50 %}
+                                                        <span class="badge status-badge status-open">Moderate</span>
+                                                    {% else %}
+                                                        <span class="badge status-badge status-resolved">Good</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'edit_budget' budget.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteBudget({{ budget.id }})">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Analysis -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calculator me-2"></i>Cost Analysis by Category
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for cost in category_costs %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card border-left-primary">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ cost.category }}</h6>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Total Spent</small>
+                                                        <div class="h5">${{ cost.total_spent|floatformat:0 }}</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Cost/Ticket</small>
+                                                        <div class="h5">${{ cost.cost_per_ticket }}</div>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">{{ cost.tickets }} tickets processed</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Spending Distribution Chart
+const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+const spendingChart = new Chart(spendingCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for budget in budgets %}'{{ budget.category.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for budget in budgets %}{{ budget.spent }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Monthly Spending Trends Chart
+const trendsCtx = document.getElementById('spendingTrendsChart').getContext('2d');
+const monthlySpending = {{ monthly_spending|safe }};
+const spendingTrendsChart = new Chart(trendsCtx, {
+    type: 'line',
+    data: {
+        labels: monthlySpending.map(item => item.month),
+        datasets: [{
+            label: 'Monthly Spending',
+            data: monthlySpending.map(item => item.spending),
+            borderColor: '#36A2EB',
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Amount ($)'
+                }
+            }
+        }
+    }
+});
+
+// Functions
+function exportBudgetReport() {
+    // Redirect to the actual download URL
+    window.location.href = "{% url 'download_budget_report' %}";
+}
+
+function deleteBudget(budgetId) {
+    if (confirm('Are you sure you want to delete this budget?')) {
+        // Implementation for budget deletion
+        alert('Budget deletion feature coming soon!');
+    }
+}
+</script>
+{% endblock %}

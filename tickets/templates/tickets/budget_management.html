@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Budget Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Budget Management</h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'create_budget' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Create New Budget
+            </a>
+            <a href="{% url 'download_budget_report' %}" class="btn btn-success btn-lg" id="download-budget-btn">
+                <i class="fas fa-download me-2"></i>Download Budget Report
+            </a>
+        </div>
+    </div>
+    
+    <!-- Alert to highlight download feature -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Export Feature:</strong> Click the "Download Budget Report" button above to export all budget data to CSV format.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Fiscal Year</th>
+                            <th>Total Budget</th>
+                            <th>Spent</th>
+                            <th>Remaining</th>
+                            <th>Usage (%)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for budget in budgets %}
+                        <tr>
+                            <td>{{ budget.name }}</td>
+                            <td>{{ budget.category.name }}</td>
+                            <td>{{ budget.fiscal_year }}</td>
+                            <td>${{ budget.amount|floatformat:2 }}</td>
+                            <td>${{ budget.spent|floatformat:2 }}</td>
+                            <td>${{ budget.remaining|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if budget.percentage_used >= 80 %}bg-danger{% elif budget.percentage_used >= 60 %}bg-warning{% else %}bg-success{% endif %}">
+                                    {{ budget.percentage_used }}%
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'edit_budget' budget.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No budgets found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    .badge {
+        padding: 0.5em 0.8em;
+        border-radius: 0.25rem;
+    }
+    .bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+    .bg-danger {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+    }
+    .bg-success {
+        background-color: #28a745 !important;
+        color: #fff !important;
+    }
+    
+    /* Enhanced download button styling */
+    #download-budget-btn {
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+        border: none !important;
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    #download-budget-btn:hover {
+        background: linear-gradient(45deg, #218838, #1ea085) !important;
+        box-shadow: 0 6px 12px rgba(40, 167, 69, 0.4) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    #download-budget-btn i {
+        animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-3px);
+        }
+        60% {
+            transform: translateY(-1px);
+        }
+    }
+</style>
+{% endblock %}

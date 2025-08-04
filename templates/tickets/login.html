@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_js %}
+    <script src="{% static 'js/tire-animation.js' %}"></script>
+{% endblock %}
+
+{% block title %}Login - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="login-container">
+        <div class="col-md-6 col-lg-4 mx-auto">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <img src="{% static 'images/stm_logo.png' %}" alt="Superdoll Logo" style="height: 50px;">
+                        <p class="text-muted">IT Help Desk Login</p>
+                    </div>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- User Login Form (Default) -->
+                    <form id="userLoginForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="login_type" value="user">
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-2"></i>Username
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="Enter your username" required>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login 
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Admin Login Form (Hidden) -->
+                    <form id="adminLoginForm" method="post" style="display: none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="login_type" value="admin">
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </label>
+                            <input type="email" class="form-control" id="email" name="username" 
+                                   placeholder="Enter your email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="Enter your password" required>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-user-shield me-2"></i>Login as Admin
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="button" class="btn btn-link" onclick="toggleLoginForm()">
+                                <i class="fas fa-arrow-left me-1"></i>Back to User Login
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Admin Access Button -->
+                    <div id="adminToggle" class="text-center">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleLoginForm()">
+                            <i class="fas fa-cog me-1"></i>
+                        </button>
+                    </div>
+<!-- 
+                    <div class="text-center mt-4">
+                        <div class="moving-text small">
+                            We don't grow when things are easy, we grow when we face challenges
+                        </div>
+                    </div> -->
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Need help? Contact IT Support<br>
+                            <i class="fas fa-phone me-1"></i>+1-555-SUPERDOLL-HELP-TEAM (4357)
+                            <img src="{% static 'images/wecare.png' %}" alt="Superdoll Logo" style="height: 50px;">
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLoginForm() {
+    const userForm = document.getElementById('userLoginForm');
+    const adminForm = document.getElementById('adminLoginForm');
+    const adminToggle = document.getElementById('adminToggle');
+    
+    if (userForm.style.display === 'none') {
+        // Show user form, hide admin form
+        userForm.style.display = 'block';
+        adminForm.style.display = 'none';
+        adminToggle.style.display = 'block';
+    } else {
+        // Show admin form, hide user form
+        userForm.style.display = 'none';
+        adminForm.style.display = 'block';
+        adminToggle.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

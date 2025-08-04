@@ -1,0 +1,10 @@
+# Requirements for Vercel deployment of Django IT Helpdesk
+Django>=5.0,<6.0
+mysqlclient>=2.2.0
+django-cors-headers>=4.0.0
+whitenoise>=6.5.0
+python-decouple>=3.8
+Pillow>=10.0.0
+
+# Note: Removed channels and channels-redis as they don't work with Vercel serverless
+# For real-time features on Vercel, consider using Pusher or Ably instead

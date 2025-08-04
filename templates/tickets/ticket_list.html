@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block title %}{% if is_admin %}All Tickets{% else %}My Tickets{% endif %} - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block extra_head %}
+<style>
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 0.35em 0.65em;
+    }
+    .status-new { background-color: #3498db; color: white; }
+    .status-open { background-color: #e67e22; color: white; }
+    .status-in_progress { background-color: #f1c40f; color: black; }
+    .status-resolved { background-color: #2ecc71; color: white; }
+    .status-unresolved { background-color: #e74c3c; color: white; }
+    .priority-badge {
+        font-size: 0.85rem;
+        padding: 0.35em 0.65em;
+    }
+    .priority-urgent { background-color: #d63031; color: white; }
+    .priority-high { background-color: #e17055; color: white; }
+    .priority-medium { background-color: #00b894; color: white; }
+    .priority-low { background-color: #0984e3; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4" style="color: yellow;">
+                    <i class="fas fa-gem fa-2x mb-2" style="color: yellow;"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>IT Help Desk</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% if is_admin %}{% url 'admin_dashboard' %}{% else %}{% url 'user_dashboard' %}{% endif %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>MAIN ADMIN DASHBOARD
+                    </a>
+                    {% if not is_admin %}
+                    <a class="nav-link" href="{% url 'create_ticket' %}">
+                        <i class="fas fa-plus-circle me-2"></i>New Ticket
+                    </a>
+                    {% endif %}
+                    <a class="nav-link active" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>{% if is_admin %}All Tickets{% else %}My Tickets{% endif %}
+                    </a>
+                    {% if is_admin %}
+                    <a class="nav-link" href="{% url 'export_tickets' %}">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </a>
+                    {% endif %}
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+                
+                <!-- <div class="mt-4 p-3 bg-light rounded text-dark">
+                    <div class="moving-text small">
+                        We don't grow when things are easy, we grow when we face challenges
+                    </div>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-list me-2"></i>{% if is_admin %}All Tickets{% else %}My Tickets{% endif %}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        {% if not is_admin %}
+                        <a href="{% url 'create_ticket' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Ticket
+                        </a>
+                        {% endif %}
+                        {% if is_admin %}
+                        <a href="{% url 'export_tickets' %}" class="btn btn-success">
+                            <i class="fas fa-download me-1"></i>Export
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">All Statuses</option>
+                                <option value="open" {% if current_status == 'open' %}selected{% endif %}>Open</option>
+                                <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="resolved" {% if current_status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                <option value="closed" {% if current_status == 'closed' %}selected{% endif %}>Closed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select name="priority" id="priority" class="form-control">
+                                <option value="">All Priorities</option>
+                                <option value="low" {% if current_priority == 'low' %}selected{% endif %}>Low</option>
+                                <option value="medium" {% if current_priority == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="high" {% if current_priority == 'high' %}selected{% endif %}>High</option>
+                                <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-control">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tickets Table -->
+            <div class="card">
+                <div class="card-body">
+                    {% if tickets %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        {% if is_admin %}<th>User</th>{% endif %}
+                                    
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        {% if is_admin %}<th>Assigned</th>{% endif %}
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ticket in tickets %}
+                                        <tr class="priority-{{ ticket.priority }}">
+                                            <td><strong>#{{ ticket.id }}</strong></td>
+                                            <td>
+                                                <a href="{% url 'ticket_detail' ticket.id %}" class="text-decoration-none">
+                                                    {{ ticket.title|truncatechars:50 }}
+                                                </a>
+                                            </td>
+                                            {% if is_admin %}
+                                            <td>{{ ticket.user.username }}</td>
+                                            {% endif %}
+                                           
+                                            <td>
+                                                <span class="priority-badge priority-{{ ticket.priority|lower }}">
+                                                    {{ ticket.get_priority_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-{{ ticket.status|lower }}">
+                                                    {{ ticket.get_status_display }}
+                                                </span>
+                                            </td>
+                                            {% if is_admin %}
+                                            <td>
+                                                {% if ticket.assigned_to %}
+                                                    {{ ticket.assigned_to.username }}
+                                                {% else %}
+                                                    <span class="text-muted">Unassigned</span>
+                                                {% endif %}
+                                            </td>
+                                            {% endif %}
+                                            <td>{{ ticket.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tickets found</h5>
+                            <p class="text-muted">
+                                {% if not is_admin %}
+                                    You haven't created any tickets yet.
+                                {% else %}
+                                    No tickets match your current filters.
+                                {% endif %}
+                            </p>
+                            {% if not is_admin %}
+                                <a href="{% url 'create_ticket' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Create Your First Ticket
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

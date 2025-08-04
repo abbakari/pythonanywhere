@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{%load static%}
+
+{% block title %}Edit Budget - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <i class="fas fa-gem fa-2x mb-2"></i>
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>Budget</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>MAIN ADMIN DASHBOARD
+                    </a>
+                    <a class="nav-link" href="{% url 'analytics_dashboard' %}">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                    <a class="nav-link" href="{% url 'forecasting_dashboard' %}">
+                        <i class="fas fa-crystal-ball me-2"></i>Forecasting
+                    </a>
+                    <a class="nav-link" href="{% url 'budget_management' %}">
+                        <i class="fas fa-dollar-sign me-2"></i>Budget
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-edit me-2"></i>Edit Budget: {{ budget.name }}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'budget_management' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Budget
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-edit me-2"></i>Budget Details
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        <i class="fas fa-tag me-2"></i>Budget Name *
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger small">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        <i class="fas fa-folder me-2"></i>Category *
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger small">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                                <i class="fas fa-dollar-sign me-2"></i>Allocated Amount *
+                                            </label>
+                                            {{ form.amount }}
+                                            {% if form.amount.errors %}
+                                                <div class="text-danger small">{{ form.amount.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.spent.id_for_label }}" class="form-label">
+                                                <i class="fas fa-credit-card me-2"></i>Spent Amount
+                                            </label>
+                                            {{ form.spent }}
+                                            {% if form.spent.errors %}
+                                                <div class="text-danger small">{{ form.spent.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{% url 'budget_management' %}" class="btn btn-secondary me-md-2">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Update Budget
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Budget Status
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <div class="h3">${{ budget.remaining|floatformat:2 }}</div>
+                                <p class="text-muted">Remaining</p>
+                            </div>
+                            
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar 
+                                    {% if budget.percentage_used >= 90 %}bg-danger
+                                    {% elif budget.percentage_used >= 75 %}bg-warning
+                                    {% elif budget.percentage_used >= 50 %}bg-info
+                                    {% else %}bg-success{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ budget.percentage_used }}%">
+                                    {{ budget.percentage_used|floatformat:1 }}%
+                                </div>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="h5">${{ budget.amount|floatformat:2 }}</div>
+                                    <small class="text-muted">Allocated</small>
+                                </div>
+                                <div class="col-6">
+                                    <div class="h5">${{ budget.spent|floatformat:2 }}</div>
+                                    <small class="text-muted">Spent</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Budget History
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6>Budget Created</h6>
+                                        <small class="text-muted">{{ budget.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-info"></div>
+                                    <div class="timeline-content">
+                                        <h6>Last Updated</h6>
+                                        <small class="text-muted">Today</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

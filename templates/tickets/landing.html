@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<!-- Loading Screen -->
+<div id="loadingScreen" class="loading-screen">
+    <div class="logo" style="color: yellow ;">
+        <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid" style="height: 60px;">
+    </div>
+    
+    <div class="spinner"></div>
+    <div class="moving-text">
+        We don't grow when things are easy, we grow when we face challenges
+    </div>
+    <p class="mt-3">Loading your IT support experience...</p>
+</div>
+
+<!-- Main Content (Hidden initially) -->
+<!-- <div id="mainContent" style="display: none;">
+    <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+        <div class="row w-100">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid" style="height: 60px;">
+                            <h2 class="h3 text-muted">IT Help Desk System</h2>
+                        </div>
+                        
+                        <div class="moving-text mb-4">
+                            We don't grow when things are easy, we grow when we face challenges
+                        </div> 
+                        
+                        <p class="lead mb-4">
+                            Welcome to your comprehensive IT support solution. Get help, track tickets, 
+                            and resolve issues efficiently with our modern help desk system.
+                        </p>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body">
+                                        <i class="fas fa-ticket-alt fa-2x text-primary mb-3"></i>
+                                        <h5>Smart Ticketing</h5>
+                                        <p class="small">Create and track support tickets with real-time updates</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body">
+                                        <i class="fas fa-comments fa-2x text-success mb-3"></i>
+                                        <h5>Live Chat</h5>
+                                        <p class="small">Instant messaging with IT support team</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100 border-0 bg-light">
+                                    <div class="card-body">
+                                        <i class="fas fa-chart-line fa-2x text-info mb-3"></i>
+                                        <h5>Analytics</h5>
+                                        <p class="small">Comprehensive reporting and insights</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-sign-in-alt me-2"></i>Get Started
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4 text-muted">
+                            <small>
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Secure • Reliable • Available 24/7
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingScreen = document.getElementById('loadingScreen');
+    
+        // Show loading screen for 6 seconds
+        setTimeout(function() {
+            loadingScreen.classList.add('fade-out');
+    
+            setTimeout(function() {
+                // Redirect to login page after fade out
+                window.location.href = "{% url 'login' %}";
+            }, 500); // fade-out duration
+        }, 1000); // loading screen duration
+    });
+    </script>
+    
+{% endblock %}

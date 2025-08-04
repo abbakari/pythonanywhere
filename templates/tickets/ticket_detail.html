@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ticket #{{ ticket.id }} - SUPERDOLL IT Help Desk{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar p-0">
+            <div class="p-3">
+                <div class="text-center mb-4">
+                    <img src="{% static 'images/stm_logo.png' %}" alt="SUPERDOLL Logo" class="img-fluid">
+                    <small>IT Help Desk</small>
+                </div>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="{% if is_admin %}{% url 'admin_dashboard' %}{% else %}{% url 'user_dashboard' %}{% endif %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    {% if not is_admin %}
+                    <a class="nav-link" href="{% url 'create_ticket' %}">
+                        <i class="fas fa-plus-circle me-2"></i>New Ticket
+                    </a>
+                    {% endif %}
+                    <a class="nav-link" href="{% url 'ticket_list' %}">
+                        <i class="fas fa-list me-2"></i>{% if is_admin %}All Tickets{% else %}My Tickets{% endif %}
+                    </a>
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-ticket-alt me-2"></i>Ticket #{{ ticket.id }}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{% url 'ticket_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- Ticket Details -->
+                <div class="col-md-8">
+                    <div class="card priority-{{ ticket.priority }}">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">{{ ticket.title }}</h5>
+                                <div>
+                                    <span class="badge 
+                                        {% if ticket.priority == 'urgent' %}bg-danger
+                                        {% elif ticket.priority == 'high' %}bg-warning
+                                        {% elif ticket.priority == 'medium' %}bg-info
+                                        {% else %}bg-success{% endif %} me-2">
+                                        {{ ticket.get_priority_display }}
+                                    </span>
+                                    <span class="badge 
+                                        {% if ticket.status == 'new' or ticket.status == 'New' %}bg-primary
+                                        {% elif ticket.status == 'open' %}bg-warning
+                                        {% elif ticket.status == 'in_progress' %}bg-info
+                                        {% elif ticket.status == 'resolved' %}bg-success
+                                        {% elif ticket.status == 'unresolved' %}bg-danger
+                                        {% elif ticket.status == 'closed' %}bg-secondary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ ticket.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Created by:</strong> {{ ticket.user.get_full_name|default:ticket.user.username }}<br>
+                                    <strong>Department:</strong> {{ ticket.user.userprofile.department }}<br>
+                                    <strong>Office:</strong> {{ ticket.user.userprofile.office_name }}<br>
+                                    <strong>Category:</strong> {{ ticket.category.name }}<br>
+                                    <strong>Priority:</strong> {{ ticket.get_priority_display }}<br>
+                                    <strong>Created:</strong> {{ ticket.created_at|date:"M d, Y H:i" }}
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- <strong>Assigned to:</strong> {% if ticket.assigned_to %}{{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}{% else %}Unassigned{% endif %}<br> -->
+                                    <strong>Last updated:</strong> {{ ticket.updated_at|date:"M d, Y H:i" }}<br>
+                                    {% if ticket.resolved_at %}
+                                        <strong>Resolved:</strong> {{ ticket.resolved_at|date:"M d, Y H:i" }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>Description:</h6>
+                            <p class="text-muted">{{ ticket.description|linebreaks }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-comments me-2"></i>Conversation
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chat-container" id="chatContainer" style="max-height: 400px; overflow-y: auto;">
+                                {% for msg in ticket_messages %}
+                                    <div class="message {% if msg.user == request.user %}user-message{% else %}admin-message{% endif %} mb-3 p-3 rounded">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <strong>{{ msg.user.get_full_name|default:msg.user.username }}</strong>
+                                            <small class="text-muted">{{ msg.created_at|date:"M d, Y H:i" }}</small>
+                                        </div>
+                                        <p class="mb-0">{{ msg.message|linebreaks }}</p>
+                                    </div>
+                                {% empty %}
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                                        <p>No messages yet. Start the conversation!</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Message Form -->
+                            <div class="message-form mt-3">
+                                <form method="post" id="messageForm">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        {{ message_form.message }}
+                                        {% if message_form.message.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ message_form.message.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" name="message_submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-1"></i> Send Message
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket Management (Admin Only) -->
+                <div class="col-md-4">
+                    {% if is_admin %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cogs me-2"></i>Manage Ticket
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="updateForm">
+                                {% csrf_token %}
+                                
+                                <!-- Category and Priority Assignment -->
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <select name="category" class="form-select" required>
+                                        <option value="">Select category...</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if ticket.category_id == category.id %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Priority</label>
+                                    <select name="priority" class="form-select" required>
+                                        <option value="">Select priority...</option>
+                                        <option value="urgent" {% if ticket.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                                        <option value="high" {% if ticket.priority == 'high' %}selected{% endif %}>High</option>
+                                        <option value="medium" {% if ticket.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="low" {% if ticket.priority == 'low' %}selected{% endif %}>Low</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Status and Assignment -->
+                                <div class="mb-3">
+                                    <label for="{{ update_form.status.id_for_label }}" class="form-label">Status</label>
+                                    {{ update_form.status }}
+                                </div>
+
+                                {% if request.user.is_superuser %}
+                                <!-- <div class="mb-3">
+                                    <label for="{{ update_form.assigned_to.id_for_label }}" class="form-label">Assign to</label>
+                                    {{ update_form.assigned_to }}
+                                </div> -->
+                                {% endif %}
+
+                                <div class="d-grid">
+                                    <button type="submit" name="update_ticket" class="btn btn-success">
+                                        <i class="fas fa-save me-1"></i>Update Ticket
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Ticket Info -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Ticket Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Ticket ID:</strong> #{{ ticket.id }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Status:</strong> 
+                                <span class="status-badge status-{{ ticket.status|lower }}">
+                                    {{ ticket.get_status_display }}
+                                </span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge priority-{{ ticket.priority|lower }}">
+                                    {{ ticket.get_priority_display }}
+                                </span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Category:</strong> {{ ticket.category.name }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Created:</strong> {{ ticket.created_at|date:"M d, Y H:i" }}
+                            </div>
+                            {% if ticket.resolved_at %}
+                            <div class="mb-2">
+                                <strong>Resolved:</strong> {{ ticket.resolved_at|date:"M d, Y H:i" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-phone me-2"></i>Need Help?
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <p class="mb-2">For urgent issues, call:</p>
+                            <h5 style="color: yellow;">+1-555-SUPERDOLL-HELP-TEAM (4357)</h5>
+                            <small class="text-muted">Available 24/7</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-message {
+        background-color: #e3f2fd;
+        margin-left: 20%;
+        border-radius: 15px 15px 0 15px;
+    }
+    .admin-message {
+        background-color: #f5f5f5;
+        margin-right: 20%;
+        border-radius: 15px 15px 15px 0;
+    }
+    .priority-urgent {
+        border-left: 5px solid #dc3545;
+    }
+    .priority-high {
+        border-left: 5px solid #fd7e14;
+    }
+    .priority-medium {
+        border-left: 5px solid #0dcaf0;
+    }
+    .priority-low {
+        border-left: 5px solid #198754;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-scroll chat to bottom
+    const chatContainer = document.getElementById('chatContainer');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Auto-resize textarea
+    const messageTextarea = document.getElementById('messageText');
+    if (messageTextarea) {
+        messageTextarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Submit on Ctrl+Enter
+        messageTextarea.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('messageForm').submit();
+            }
+        });
+    }
+
+    // Handle form submissions
+    const messageForm = document.getElementById('messageForm');
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            const messageText = document.getElementById('messageText');
+            if (messageText && messageText.value.trim() === '') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+
+    const updateForm = document.getElementById('updateForm');
+    if (updateForm) {
+        updateForm.addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to update this ticket?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
