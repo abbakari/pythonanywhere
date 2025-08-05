@@ -1,9 +1,10 @@
 # """
-# Production settings for Django IT Helpdesk application.
-# This file contains security-hardened settings for production deployment.
+# Render-specific settings for Django IT Helpdesk application.
+# Optimized for Render cloud platform deployment.
 # """
 
 # import os
+# import dj_database_url
 # from pathlib import Path
 
 # # Bypass MariaDB version check for compatibility with MariaDB 10.4.32
@@ -16,35 +17,34 @@
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
 # # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'CHANGE-THIS-IN-PRODUCTION-USE-ENV-VARIABLE')
+# SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-change-this-in-production')
 
 # # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = False
+# DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# # Production allowed hosts - configure these for your domain
+# # Render handles host validation, but we'll be specific
 # ALLOWED_HOSTS = [
-#     'localhost',
-#     '127.0.0.1',
 #     '.onrender.com',  # Render subdomains
-#     'liveITdeck.onrender.com',
 #     'superdoll.co.tz',
 #     'www.superdoll.co.tz',
+#     'localhost',
+#     '127.0.0.1',
 # ]
 
 # # Add any additional hosts from environment
 # if 'ALLOWED_HOSTS' in os.environ:
 #     ALLOWED_HOSTS.extend(os.environ['ALLOWED_HOSTS'].split(','))
 
-# # Application definition
+# # Application definition - Full Django features supported on Render
 # INSTALLED_APPS = [
-#     'daphne',
+#     'daphne',  # Render supports WebSockets
 #     'django.contrib.admin',
 #     'django.contrib.auth',
 #     'django.contrib.contenttypes',
 #     'django.contrib.sessions',
 #     'django.contrib.messages',
 #     'django.contrib.staticfiles',
-#     'channels',
+#     'channels',  # WebSocket support
 #     'corsheaders',
 #     'tickets',
 # ]
@@ -52,7 +52,7 @@
 # MIDDLEWARE = [
 #     'corsheaders.middleware.CorsMiddleware',
 #     'django.middleware.security.SecurityMiddleware',
-#     'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files in production
+#     'whitenoise.middleware.WhiteNoiseMiddleware',  # For static files
 #     'django.contrib.sessions.middleware.SessionMiddleware',
 #     'django.middleware.common.CommonMiddleware',
 #     'django.middleware.csrf.CsrfViewMiddleware',
@@ -82,9 +82,7 @@
 # WSGI_APPLICATION = 'helpdesk.wsgi.application'
 # ASGI_APPLICATION = 'helpdesk.asgi.application'
 
-# # Database - Support both PostgreSQL (Render) and MySQL (fallback)
-# import dj_database_url
-
+# # Database - Render provides PostgreSQL by default, but we can use MySQL too
 # # Check if DATABASE_URL is provided (Render PostgreSQL)
 # if 'DATABASE_URL' in os.environ:
 #     DATABASES = {
@@ -105,19 +103,19 @@
 #                 'charset': 'utf8mb4',
 #                 'use_unicode': True,
 #             },
-#         'TEST': {
-#             'CHARSET': 'utf8mb4',
-#             'COLLATION': 'utf8mb4_unicode_ci',
+#             'TEST': {
+#                 'CHARSET': 'utf8mb4',
+#                 'COLLATION': 'utf8mb4_unicode_ci',
+#             }
 #         }
 #     }
-# }
 
-# # Channels - Production Configuration
+# # Channels configuration for WebSocket support
 # CHANNEL_LAYERS = {
 #     'default': {
 #         'BACKEND': 'channels_redis.core.RedisChannelLayer',
 #         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
+#             "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
 #         },
 #     },
 # }
@@ -147,29 +145,33 @@
 # USE_I18N = True
 # USE_TZ = True
 
-# # Static files (CSS, JavaScript, Images) - Production Configuration
+# # Static files configuration for Render
 # STATIC_URL = '/static/'
 # STATIC_ROOT = BASE_DIR / 'staticfiles'
 # STATICFILES_DIRS = [
 #     BASE_DIR / 'static',
 # ]
 
-# # Static files storage for production
+# # Static files storage with compression
 # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# # Media files - Production Configuration
+# # Media files configuration
 # MEDIA_URL = '/media/'
 # MEDIA_ROOT = BASE_DIR / 'media'
 
 # # Default primary key field type
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# # CORS settings - Production (more restrictive)
+# # CORS settings - More restrictive for production
 # CORS_ALLOW_ALL_ORIGINS = False
 # CORS_ALLOWED_ORIGINS = [
-#     # Add your frontend domains here
-#     # "https://yourdomain.com",
-#     # "https://www.yourdomain.com",
+#     "https://superdoll.co.tz",
+#     "https://www.superdoll.co.tz",
+# ]
+
+# # Allow CORS for Render deployments
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r"^https://.*\.onrender\.com$",
 # ]
 
 # # Login URLs
@@ -181,74 +183,80 @@
 # SECURE_BROWSER_XSS_FILTER = True
 # SECURE_CONTENT_TYPE_NOSNIFF = True
 # X_FRAME_OPTIONS = 'DENY'
-# SECURE_HSTS_SECONDS = 31536000  # 1 year
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
 
-# # HTTPS Settings (uncomment when using HTTPS)
-# # SECURE_SSL_REDIRECT = True
-# # SESSION_COOKIE_SECURE = True
-# # CSRF_COOKIE_SECURE = True
+# # HTTPS Settings for Render (Render handles SSL)
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT = not DEBUG
+# SESSION_COOKIE_SECURE = not DEBUG
+# CSRF_COOKIE_SECURE = not DEBUG
+# SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  # 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+# SECURE_HSTS_PRELOAD = not DEBUG
 
 # # Session Security
 # SESSION_COOKIE_AGE = 3600  # 1 hour
 # SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # SESSION_COOKIE_HTTPONLY = True
 
-# # Logging Configuration
+# # Email Configuration
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+# EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@superdoll.co.tz')
+
+# # Logging Configuration for Render
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,
 #     'formatters': {
 #         'verbose': {
-#             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-#             'style': '{',
-#         },
-#         'simple': {
-#             'format': '{levelname} {message}',
+#             'format': '{levelname} {asctime} {module} {message}',
 #             'style': '{',
 #         },
 #     },
 #     'handlers': {
-#         'file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': BASE_DIR / 'logs' / 'django.log',
-#             'formatter': 'verbose',
-#         },
 #         'console': {
 #             'level': 'INFO',
 #             'class': 'logging.StreamHandler',
-#             'formatter': 'simple',
+#             'formatter': 'verbose',
 #         },
 #     },
 #     'root': {
-#         'handlers': ['file', 'console'],
+#         'handlers': ['console'],
 #         'level': 'INFO',
 #     },
 #     'loggers': {
 #         'django': {
-#             'handlers': ['file', 'console'],
+#             'handlers': ['console'],
 #             'level': 'INFO',
 #             'propagate': False,
 #         },
 #     },
 # }
 
-# # Cache Configuration (optional - for better performance)
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379/1',
+# # Cache Configuration - Use Redis if available
+# if 'REDIS_URL' in os.environ:
+#     CACHES = {
+#         'default': {
+#             'BACKEND': 'django_redis.cache.RedisCache',
+#             'LOCATION': os.environ.get('REDIS_URL'),
+#             'OPTIONS': {
+#                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             }
+#         }
 #     }
-# }
+# else:
+#     # Fallback to database cache
+#     CACHES = {
+#         'default': {
+#             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+#             'LOCATION': 'django_cache_table',
+#         }
+#     }
 
-# # Email Configuration (configure for your email provider)
-# # Use console backend for testing, SMTP for production
-# EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
-# EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-# EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@yourdomain.com')
+# # File upload settings
+# FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+# DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
